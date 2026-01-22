@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.auth.schemas import UserRegister, UserRead, ChengePasswordSchemas
+from app.auth.repository import UserRepository
 
 
 class AuthManager:
@@ -29,6 +29,7 @@ class AuthManager:
 
         :return: JWT token
         """
+
         pass
 
     async def register(
@@ -38,7 +39,7 @@ class AuthManager:
         """
         Метод для регистрации пользователя
 
-        проверят наличии username в БД
+        проверят наличие username в БД
 
         проверяет наличие почты
 
@@ -57,7 +58,7 @@ class AuthManager:
             token: str,
     ) -> UserRead:
         """
-        Метод для получение информации о пльзователи
+        Метод для получения информации о пользователе
 
         Проверяем токен на валидность
 
@@ -79,7 +80,7 @@ class AuthManager:
 
         Проверка наличия пользователя
 
-        проверяет старый пароль пользователя и хеширует новый пароль
+        проверяет старый пароль пользователя и хэширует новый пароль
 
         Изменяет пароль в БД
 

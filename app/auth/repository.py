@@ -15,6 +15,10 @@ class UserRepository:
             self,
             username
     ) -> User | None:
+        """
+        Метод возвращает Модельку пользователя по его Имени из БД
+        """
+
         stmt = Select(User).where(User.username == username)
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
@@ -24,6 +28,10 @@ class UserRepository:
             self,
             email: str
     ) -> User:
+        """
+        Метод возвращает Модельку пользователя по его Почте из БД
+        """
+
         stmt = Select(User).where(User.email == email)
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
@@ -37,6 +45,10 @@ class UserRepository:
             hashed_password: str,
             role: str = "client"
     ) -> User:
+        """
+        Метод создаёт Пользователя в БД по Модельке
+        """
+
         stmt = Insert(User).values(
             username=username,
             email=email,
@@ -53,6 +65,10 @@ class UserRepository:
             self,
             user_id: int
     ) -> User:
+        """
+        Метод возвращает Модельку пользователя по его ИД из БД
+        """
+
         stmt = Select(User).where(User.id == user_id)
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
@@ -63,6 +79,9 @@ class UserRepository:
             user_id: int,
             hashed_password: str
     ) -> None:
+        """
+        Метод Обновляет пароль пользователя
+        """
         stmt = Update(User).where(User.id == user_id).values(
             hashed_password=hashed_password,
         )
