@@ -74,7 +74,7 @@ class UserRepository:
         user = result.scalar_one_or_none()
         return user
 
-    async def udate_password(
+    async def update_password(
             self,
             user_id: int,
             hashed_password: str

@@ -1,6 +1,11 @@
+from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.auth.schemas import UserRegister, UserRead, ChengePasswordSchemas
+
+from app.auth.models import User
+from app.auth.schemas import UserRegister, UserRead, ChengePasswordSchemas, Token
 from app.auth.repository import UserRepository
+from app.auth.exceptions import InvalidUsernamePassword, UsernameAlreadyExist, EmailAlreadyExist, InvalidToken
+from app.auth.servises import PasswordServises, TokenServises
 
 
 class AuthManager:
@@ -8,14 +13,17 @@ class AuthManager:
             self,
             session: AsyncSession,
     ):
-        pass
+        self.session = session
+        self.user_repository = UserRepository(session)
+        self.password_service = PasswordServises()
+        self.token_service = TokenServises()
 
     async def login(
             self,
             username: str,
             password: str,
 
-    ):
+    ) -> Token:
         """
         Метод для входа в учёт запись
 
@@ -29,13 +37,27 @@ class AuthManager:
 
         :return: JWT token
         """
+        user = await self.user_repository.get_user_by_username(username)
+        if not user:
+            raise InvalidUsernamePassword(
+                "Invalid username or password",
+            )
+        if self.password_service.verify(password, user.hashed_password):
+            raise InvalidUsernamePassword(
+                "Invalid username or password",
+            )
+        access_token = self.token_service.encode(str(user.id))
+        refresh_token = self.token_service.encode(str(user.id), is_refresh=True)
 
-        pass
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )
 
     async def register(
             self,
             request: UserRegister
-    ):
+    ) -> User:
         """
         Метод для регистрации пользователя
 
@@ -51,12 +73,33 @@ class AuthManager:
         :param request: объект модельки
         :return: Моделька созданного пользователя
         """
-        pass
+
+        user = await self.user_repository.get_user_by_username(request.username)
+        if user:
+            raise UsernameAlreadyExist(
+                "Username already exist",
+            )
+        user = await self.user_repository.get_user_by_email(request.email)
+        if user:
+            raise EmailAlreadyExist(
+                "Email already exist",
+            )
+
+        hashed_password = self.password_service.hash(request.password)
+
+        user = await self.user_repository.create_user(
+            username=request.username,
+            email=request.email,
+            hashed_password=hashed_password,
+            full_name=request.full_name,
+        )
+        await self.session.commit()
+        return user
 
     async def get_me(
             self,
             token: str,
-    ) -> UserRead:
+    ) -> User:
         """
         Метод для получения информации о пользователе
 
@@ -67,14 +110,32 @@ class AuthManager:
         :param token: JWT token
         :return: Моделька пользователя
         """
-        pass
+        payload = self.token_service.decode(token)
+
+        if payload.get("is_expired", True):
+            raise InvalidToken(
+                "Invalid token",
+            )
+
+        if not payload.get("sub") or not payload.get("sub").isdigit():
+            raise InvalidToken(
+                "Invalid token",
+            )
+
+        user = await self.user_repository.get_user_by_id(int(payload.get("sub")))
+
+        if not user:
+            raise InvalidToken(
+                "Invalid token",
+            )
+        return user
 
     async def change_password(
             self,
-            user_id: int,
+            user: User,
             request: ChengePasswordSchemas,
 
-    ):
+    ) -> None:
         """
         Метод изменение пароля
 
@@ -86,11 +147,23 @@ class AuthManager:
 
 
 
-        :param user_id: ИД пользователя
+        :param user: Пользователь
         :param request: Моделька
         :return: ничего
         """
-        pass
+
+        if self.password_service.verify(request.old_password, user.hashed_password):
+            raise InvalidUsernamePassword(
+                "Invalid username or password",
+            )
+
+        hashed_password = self.password_service.hash(request.new_password)
+
+        await self.user_repository.update_password(
+            user.id,
+            hashed_password,
+        )
+        await self.session.commit()
 
     async def refresh_token(
             self,
@@ -107,32 +180,22 @@ class AuthManager:
         :param token: JWT token
         :return: JWT token
         """
-        pass
+        payload = self.token_service.decode(token)
 
+        if not payload.get("is_refresh"):
+            raise InvalidToken(
+                "Invalid token",
+            )
 
+        if not payload.get("sub") or not payload.get("sub").isdigit():
+            raise InvalidToken(
+                "Invalid token",
+            )
 
+        access_token = self.token_service.encode(payload.get("sub"))
+        refresh_token = self.token_service.encode(payload.get("sub"), is_refresh=True)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )
