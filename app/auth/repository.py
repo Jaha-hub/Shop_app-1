@@ -41,7 +41,7 @@ class UserRepository:
             self,
             username: str,
             email: str,
-            full_name: str,
+            fullname: str,
             hashed_password: str,
             role: str = "client"
     ) -> User:
@@ -52,7 +52,7 @@ class UserRepository:
         stmt = Insert(User).values(
             username=username,
             email=email,
-            full_name=full_name,
+            fullname=fullname,
             hashed_password=hashed_password,
             role=role,
         ).returning(User)

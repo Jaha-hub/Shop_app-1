@@ -1,8 +1,7 @@
-from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-from app.auth.schemas import UserRegister, UserRead, ChengePasswordSchemas, Token
+from app.auth.schemas import UserRegister, ChengePasswordSchemas, Token
 from app.auth.repository import UserRepository
 from app.auth.exceptions import InvalidUsernamePassword, UsernameAlreadyExist, EmailAlreadyExist, InvalidToken
 from app.auth.servises import PasswordServises, TokenServises
@@ -42,7 +41,7 @@ class AuthManager:
             raise InvalidUsernamePassword(
                 "Invalid username or password",
             )
-        if self.password_service.verify(password, user.hashed_password):
+        if not self.password_service.verify(password, user.hashed_password):
             raise InvalidUsernamePassword(
                 "Invalid username or password",
             )
@@ -91,7 +90,7 @@ class AuthManager:
             username=request.username,
             email=request.email,
             hashed_password=hashed_password,
-            full_name=request.full_name,
+            fullname=request.fullname,
         )
         await self.session.commit()
         return user
@@ -112,7 +111,7 @@ class AuthManager:
         """
         payload = self.token_service.decode(token)
 
-        if payload.get("is_expired", True):
+        if payload.get("is_refresh", True):
             raise InvalidToken(
                 "Invalid token",
             )
@@ -157,7 +156,7 @@ class AuthManager:
                 "Invalid username or password",
             )
 
-        hashed_password = self.password_service.hash(request.new_password)
+        hashed_password = self.password_service.hash(request.new_password1)
 
         await self.user_repository.update_password(
             user.id,

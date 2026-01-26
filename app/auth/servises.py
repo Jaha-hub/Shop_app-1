@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 
-from passlib.exc import InvalidTokenError
 from passlib.hash import argon2
 from jose import jwt, JWTError
 
@@ -74,8 +73,8 @@ class TokenServises:
         }
         return jwt.encode(
             payload,
-            algorithm=settings.JWT_ALGORITHM,
-            key= settings.JWT_SECRET_KEY,
+            algorithm=settings.TOKEN_ALGORITHM,
+            key= settings.TOKEN_SECRET_KEY,
         )
 
     def decode(
@@ -91,8 +90,8 @@ class TokenServises:
         try:
             payload = jwt.decode(
                 token,
-                algorithms=[settings.JWT_ALGORITHM],
-                key=settings.JWT_SECRET_KEY,
+                algorithms=[settings.TOKEN_ALGORITHM],
+                key=settings.TOKEN_SECRET_KEY,
             )
         except JWTError:
             raise InvalidToken(

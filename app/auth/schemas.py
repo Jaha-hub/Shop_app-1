@@ -18,7 +18,7 @@ class UserBase(BaseModel):
     """
 
     email: EmailStr
-    full_name: str = Field(min_length=3, max_length=512)
+    fullname: str = Field(min_length=3, max_length=512)
     username: str = Field(min_length=3, max_length=320)
 
     @field_validator('username')
@@ -34,7 +34,7 @@ class UserBase(BaseModel):
         :param value: значение для валедации
         :return: имя пользователя
         """
-        if re.fullmatch(
+        if not re.fullmatch(
                 r'^[A-Za-z][A-Za-z0-9_]*$',
                 value
         ):
@@ -179,3 +179,7 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
+
+
+class RefreshToken(BaseModel):
+    refresh_token: str
