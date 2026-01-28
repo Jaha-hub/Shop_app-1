@@ -108,7 +108,7 @@ class AuthRouter:
         ### Ошибки:
         - **401** — токен не refresh или невалидный
         """
-        return await self.manager.refresh_token(token)
+        return await self.manager.refresh_token(token=token)
 
     @router.post(
         "/change-password",

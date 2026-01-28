@@ -1,4 +1,4 @@
-from sqlalchemy import Select, Insert, Update, delete
+from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.category.models import Categories
@@ -16,7 +16,7 @@ class CategoryRepository:
             name: str,
             description: str,
     ) -> Categories:
-        stmt = Insert(Categories).values(
+        stmt = insert(Categories).values(
             name=name,
             description=description,
         ).returning(Categories)
@@ -31,7 +31,7 @@ class CategoryRepository:
             name: str,
             description: str,
     ) -> None:
-        stmt = Update(Categories).where(Categories.id == category_id).values(
+        stmt = update(Categories).where(Categories.id == category_id).values(
             name=name,
             description=description,
         )
@@ -44,13 +44,14 @@ class CategoryRepository:
             category_id: int,
     ) -> None:
         stmt = delete(Categories).where(Categories.id == category_id)
+        await self.session.commit()
         await self.session.execute(stmt)
 
 
     async def get_categories(
             self,
     ) -> list:
-        stmt= Select(Categories)
+        stmt= select(Categories)
         categories = await self.session.execute(stmt)
         return categories.scalars().all()
 
@@ -59,6 +60,6 @@ class CategoryRepository:
             self,
             category_id: int,
     ):
-        stmt = Select(Categories).where(Categories.id == category_id)
+        stmt = select(Categories).where(Categories.id == category_id)
         category = await self.session.execute(stmt)
         return category.scalar_one_or_none()

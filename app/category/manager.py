@@ -1,8 +1,10 @@
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.category.models import Categories
 from app.category.schemas import CategoryCreate, CategoryUpdate, CategoryDelete, CategoryRead
 from app.category.repository import CategoryRepository
+from app.core.dependencies import get_db
 
 
 class CategoryManager:
@@ -10,7 +12,7 @@ class CategoryManager:
             self,
             session: AsyncSession,
     ):
-        self.session = session
+        self.session = session = Depends(get_db)
         self.category_repository = CategoryRepository(session)
 
     async def create_category(
@@ -26,11 +28,10 @@ class CategoryManager:
 
     async def update_category(
             self,
-            category_id: int,
             request: CategoryUpdate,
     ) -> None:
         category = await self.category_repository.update_category(
-            category_id=category_id,
+            category_id=request.category_id,
             name=request.name,
             description=request.description,
         )

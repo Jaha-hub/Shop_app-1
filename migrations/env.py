@@ -20,6 +20,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 from app.core.models import Base
 from app.auth.models import User
+from app.category.models import Categories
 
 target_metadata = Base.metadata
 
