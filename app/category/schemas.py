@@ -1,20 +1,49 @@
-from pydantic import  Field
 
-from pydantic import BaseModel
+
+from pydantic import BaseModel, Field
 
 
 class CategoryBase(BaseModel):
-    name: str = Field(min_length=3, max_length=512)
-    description: str = Field(min_length=3, max_length=1024)
+    """
+    Базовая Pydantic моделька категории
+
+    Attributes:
+        name: название категории
+        description: описание категории
+    """
+    name: str = Field(max_length=512)
+    description: str = Field(max_length=1024)
+
 
 class CategoryCreate(CategoryBase):
+    """
+    Pydantic моделька для создания категории
+
+    Attributes:
+        name: название категории
+        description: описание категории
+    """
     pass
 
+
 class CategoryUpdate(CategoryBase):
-    category_id: int
+    """
+    Pydantic моделька для обновления категории
 
-class CategoryDelete(BaseModel):
-    id: int
+    Attributes:
+        name: название категории
+        description: описание категории
+        """
+    pass
 
-class CategoryRead(BaseModel):
+
+class CategoryRead(CategoryBase):
+    """
+    Pydantic моделька для просмотра категории
+
+    Attributes:
+        id: ИД категории
+        name: название категории
+        description: описание категории
+    """
     id: int

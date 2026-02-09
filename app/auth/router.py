@@ -1,141 +1,120 @@
-from fastapi import Depends, APIRouter
-from starlette import status
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-
+from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_utils.cbv import cbv
+from starlette import status
 
-from app.auth.dependencies import get_auth_manager
+from app.auth.dependencies import get_auth_manager, get_current_user, oauth2_scheme
 from app.auth.manager import AuthManager
-from app.auth.schemas import Token, UserRead, UserRegister, ChengePasswordSchemas, RefreshToken
+from app.auth.models import User
+from app.auth.schemas import Token, UserRead, UserRegister, ChangePasswordSchema, RefreshToken
 
 router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login",
-)
+# OAuth2PasswordRequestForm - multipart-data
 
 
 @cbv(router)
 class AuthRouter:
     manager: AuthManager = Depends(get_auth_manager)
 
-    # OAuth2PasswordRequestForm -> multipart-data
+    @router.post(
+        "/login", # путь
+        summary="авторизация в систему", # название
+        response_model=Token, # что вернет
+        status_code=status.HTTP_200_OK, # успешный статус код
+        responses = {
+
+        } # какие еще ответы он может вернуть
+    )
+    async def login(
+            self,
+            form_data: OAuth2PasswordRequestForm = Depends(),
+    ):
+        """
+        Эндпоинт для входа в учетную запись
+        """
+        response = await self.manager.login(form_data.username, form_data.password)
+        return response
+
 
     @router.post(
-        "/login",  # Путь
-        summary="Авторизация в Систему",  # Название
-        response_model=Token,  # что он вернёт
-        status_code=status.HTTP_200_OK,  # Статус код
+        "/register",
+        summary="регистрация пользователя",
+        response_model=UserRead,
+        status_code=status.HTTP_200_OK,
         responses={
 
         }
     )
-    async def login(
-            self,
-
-            form_data: OAuth2PasswordRequestForm = Depends()
-    ):
-        """
-
-        :param form_data:
-        :return:
-        """
-        response = await self.manager.login(
-            username=form_data.username,
-            password=form_data.password,
-        )
-        return response
-
-    @router.post(
-        "/register",
-        summary="Регистрация в Систему",  # Название
-        response_model=UserRead,  # что он вернёт
-        status_code=status.HTTP_200_OK,  # Статус код
-        responses={}
-
-    )
     async def register(
             self,
-            request: UserRegister
+            request: UserRegister,
     ):
-        response = await self.manager.register(
-            request=request,
-        )
+        """
+        Эндпоинт для регистрации
+        """
+        response = await self.manager.register(request)
         return response
+
+
 
     @router.get(
         "/me",
-        summary="Получить данные текущего пользователя",
+        summary="получение текущего пользователя",
         response_model=UserRead,
+        status_code=status.HTTP_200_OK,
+        responses={
+
+        }
     )
-    async def get_me(self, token: str = Depends(oauth2_scheme)):
+    async def get_me(
+            self,
+            user: User = Depends(get_current_user),
+    ):
         """
-        🔹 Возвращает данные авторизованного пользователя.
-
-        ### Требует:
-        Bearer Token в заголовке Authorization.
-
-        ### Логика:
-        1. Декодирование JWT
-        2. Проверка валидности
-        3. Получение пользователя из БД
-
-        ### Ошибки:
-        - **401** — невалидный токен
+        Эндпоинт для получения текущего пользователя
         """
-        user = await self.manager.get_me(token)
         return user
+    
+
 
     @router.post(
-        "/refresh",
-        summary="Обновление пары токенов",
-        response_model=Token,
-    )
-    async def refresh(self, token: RefreshToken):
-        """
-        🔹 Обновляет access и refresh токены.
+        "/change_password",
+        summary="изменение пароля",
+        status_code=status.HTTP_200_OK,
+        responses={
 
-        ### Требует:
-        Refresh token в заголовке Authorization.
-
-        ### Логика:
-        1. Проверка, что токен refresh
-        2. Генерация новой пары токенов
-
-        ### Ошибки:
-        - **401** — токен не refresh или невалидный
-        """
-        return await self.manager.refresh_token(token=token)
-
-    @router.post(
-        "/change-password",
-        summary="Изменить пароль пользователя",
-        status_code=status.HTTP_204_NO_CONTENT,
+        }
     )
     async def change_password(
             self,
-            request: ChengePasswordSchemas,
-            token: str = Depends(oauth2_scheme),
+            request: ChangePasswordSchema,
+            user: User = Depends(get_current_user),
     ):
         """
-        🔹 Изменение пароля текущего пользователя.
-
-        ### Параметры:
-        - **old_password**
-        - **new_password**
-
-        ### Логика:
-        1. Проверка токена
-        2. Проверка старого пароля
-        3. Хеширование нового
-        4. Обновление в БД
-
-        ### Ошибки:
-        - **401** — неверный старый пароль
+        Эндпоинт для изменения пароля пользователя
         """
-        user = await self.manager.get_me(token)
-        await self.manager.change_password(user, request)
+        response = await self.manager.change_password(user, request)
+        return response
 
+
+    @router.post(
+        "/refresh",
+        summary="обновление токена",
+        status_code=status.HTTP_200_OK,
+        responses={
+
+        }
+    )
+    async def refresh(
+            self,
+            request: RefreshToken,
+    ):
+        """
+        Эндпоинт для обновления токена
+        """
+        response = await self.manager.refresh_token(request.refresh_token)
+        return response

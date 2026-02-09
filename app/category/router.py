@@ -1,87 +1,106 @@
-from fastapi import Depends, APIRouter
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends
+from fastapi_utils.cbv import cbv
 from starlette import status
 
-from fastapi_utils.cbv import cbv
-
+from app.auth.dependencies import is_admin
+from app.category.dependencies import get_category_manager
 from app.category.manager import CategoryManager
-from app.category.schemas import CategoryRead, CategoryUpdate, CategoryCreate, CategoryDelete
-from app.core.dependencies import get_db
+from app.category.schemas import CategoryCreate, CategoryUpdate
 
 router = APIRouter(
-    prefix="/category",
-    tags=["category"],
+    prefix="/categories",
+    tags=["category"]
 )
 
 
 @cbv(router)
-class CategoriesRouter:
-    session: AsyncSession = Depends(get_db)
-    manager = CategoryManager(session=session)
+class AuthRouter:
+    manager: CategoryManager = Depends(get_category_manager)
 
     @router.post(
-        "/register",
-        summary="Регистрация в Систему",  # Название
-        response_model=CategoryRead,  # что он вернёт
-        status_code=status.HTTP_200_OK,  # Статус код
-        responses={}
-
+        "/",
+        summary="создание категории",
+        status_code=status.HTTP_200_OK,
+        dependencies=[
+            Depends(is_admin)
+        ]
     )
-    async def create_category(
+    async def create(
             self,
-            request: CategoryCreate
+            request: CategoryCreate,
     ):
-        response = await self.manager.create_category(
-            request=request,
-        )
+        """
+        Эндпоинт для создания категории
+        """
+        response = await self.manager.create_category(request)
         return response
 
-    @router.post(
-        "/update",
-    )
-    async def update_category(
-            self,
-            request: CategoryUpdate,
-    ):
-        await self.manager.update_category(
-            request=request,
-        )
-
-        return {
-            "category": "success",
-        }
-
-    @router.delete(
-        "/delete",
-    )
-    async def delete_category(
-            self,
-            request: CategoryDelete,
-    ):
-        await self.manager.delete_category(
-            request=request,
-        )
-        return {
-            "category": "success",
-        }
-
-    @router.get(
-        "/list",
-    )
-    async def get_categories(
-            self,
-    ):
-        category = await self.manager.get_all_categories()
-        return category
 
     @router.get(
         "/{category_id}",
+        summary="получение категории по ид",
+        status_code=status.HTTP_200_OK,
     )
-    async def get_category_by_id(
+    async def get_by_id(
             self,
-            request: CategoryRead,
+            category_id: int,
     ):
-        category = await self.manager.read_category(
-            request=request
-        )
-        return category
+        """
+        Эндпоинт для получения категории по ид
+        """
+        response = await self.manager.get_category(category_id)
+        return response
+
+
+    @router.get(
+        "/",
+        summary="получение категорий",
+        status_code=status.HTTP_200_OK,
+    )
+    async def get_all(
+            self,
+    ):
+        """
+        Эндпоинт для получения всех категорий
+        """
+        response = await self.manager.get_all_categories()
+        return response
+
+
+    @router.put(
+        "/",
+        summary="обновление категории",
+        status_code=status.HTTP_200_OK,
+        dependencies=[
+            Depends(is_admin)
+        ]
+    )
+    async def update(
+            self,
+            category_id: int,
+            request: CategoryUpdate
+    ):
+        """
+        Эндпоинт для обновления категории
+        """
+        response = await self.manager.update_category(category_id, request)
+        return response
+
+
+    @router.delete(
+        "/",
+        summary="удаление категории",
+        status_code=status.HTTP_200_OK,
+        dependencies=[
+            Depends(is_admin)
+        ]
+    )
+    async def delete(
+            self,
+            category_id: int
+    ):
+        """
+        Эндпоинт для удаления категории
+        """
+        response = await self.manager.delete_category(category_id)
+        return response

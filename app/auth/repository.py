@@ -1,8 +1,7 @@
-from sqlalchemy import Select, Insert, Update
+from sqlalchemy import select, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-
 
 class UserRepository:
     def __init__(
@@ -11,33 +10,59 @@ class UserRepository:
     ):
         self.session = session
 
+
     async def get_user_by_username(
             self,
-            username
+            username: str
     ) -> User | None:
         """
-        Метод возвращает Модельку пользователя по его Имени из БД
-        """
+        Функция для получения пользователя из бд по username
 
-        stmt = Select(User).where(User.username == username)
+        :param username: имя пользователя
+
+        :return: моделька пользователя или ничего
+        """
+        stmt = select(User).where(User.username == username)
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
         return user
+
 
     async def get_user_by_email(
             self,
             email: str
-    ) -> User:
+    ) -> User | None:
         """
-        Метод возвращает Модельку пользователя по его Почте из БД
-        """
+        Функция для получения пользователя из бд по email
 
-        stmt = Select(User).where(User.email == email)
+        :param email: почта пользователя
+
+        :return: моделька пользователя или ничего
+        """
+        stmt = select(User).where(User.email == email)
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
         return user
 
-    async def create_user(
+
+    async def get_user_by_id(
+            self,
+            user_id: int
+    ) -> User | None:
+        """
+        Функция для получения пользователя из бд по ИД
+
+        :param user_id: ИД пользователя
+
+        :return: моделька пользователя или ничего
+        """
+        stmt = select(User).where(User.id == user_id)
+        result = await self.session.execute(stmt)
+        user = result.scalar_one_or_none()
+        return user
+
+
+    async def create(
             self,
             username: str,
             email: str,
@@ -46,10 +71,18 @@ class UserRepository:
             role: str = "client"
     ) -> User:
         """
-        Метод создаёт Пользователя в БД по Модельке
+        Функция для создания пользователя
+
+        :param username: имя пользователя
+        :param email: почта пользователя
+        :param fullname: полное имя пользователя
+        :param hashed_password: хэшированный пароль
+        :param role: роль пользователя
+
+        :return: моделька пользователя
         """
 
-        stmt = Insert(User).values(
+        stmt = insert(User).values(
             username=username,
             email=email,
             fullname=fullname,
@@ -61,29 +94,23 @@ class UserRepository:
         user = result.scalars().first()
         return user
 
-    async def get_user_by_id(
-            self,
-            user_id: int
-    ) -> User:
-        """
-        Метод возвращает Модельку пользователя по его ИД из БД
-        """
 
-        stmt = Select(User).where(User.id == user_id)
-        result = await self.session.execute(stmt)
-        user = result.scalar_one_or_none()
-        return user
 
     async def update_password(
             self,
             user_id: int,
-            hashed_password: str
+            hashed_password: str,
     ) -> None:
         """
-        Метод Обновляет пароль пользователя
+        Функция для изменения пароля
+
+        :param user_id: ИД пользователя
+        :param hashed_password: хэшированный пароль
+
+        :return: ничего
         """
-        stmt = Update(User).where(User.id == user_id).values(
-            hashed_password=hashed_password,
+        stmt = update(User).where(User.id == user_id).values(
+            hashed_password=hashed_password
         )
-        await self.session.execute(stmt)
+        result = await self.session.execute(stmt)
         await self.session.flush()

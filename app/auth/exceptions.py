@@ -3,7 +3,7 @@ from app.core.exceptions import Unauthorized, Conflict
 
 class InvalidUsernamePassword(Unauthorized):
     """
-    Ошибка username
+    Ошибка юзернейма или пароля
     """
 
 class InvalidToken(Unauthorized):
@@ -13,10 +13,11 @@ class InvalidToken(Unauthorized):
 
 class UsernameAlreadyExist(Conflict):
     """
-    Имя пользователя уже занята
+    Имя пользователя уже занято
     """
 
 class EmailAlreadyExist(Conflict):
     """
     Почта уже занята
     """
+

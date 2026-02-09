@@ -1,11 +1,21 @@
-from sqlalchemy import BigInteger, Column, DateTime, String, Text, Boolean
+from sqlalchemy import Column, String
 
 from app.core.models import Base, IntIdMixin, TimeActionMixin
 
 
+class Category(Base, IntIdMixin, TimeActionMixin):
+     __tablename__ = 'categories'
 
-class Categories(Base, IntIdMixin, TimeActionMixin):
-    __tablename__ = 'categories'
+     """
+     Моделька категории
 
-    name = Column(String(512), nullable=False)
-    description = Column(String(1024), nullable=False)
+     Attributes:
+          id: уникальной идентификатор
+          name: название категории
+          description: описание категории
+          created_at: временная отметка создания категории
+          updated_at: временная отметка обновления категории
+     """
+
+     name = Column(String(512), nullable=False)
+     description = Column(String(1024), nullable=True)

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ASYNC_DATABASE_URL: str
 
     model_config = SettingsConfigDict(
-        env_file='.env'
+        env_file=".env"
     )
 
 settings = Settings()

@@ -1,10 +1,11 @@
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.models import User
-from app.auth.schemas import UserRegister, ChengePasswordSchemas, Token
-from app.auth.repository import UserRepository
 from app.auth.exceptions import InvalidUsernamePassword, UsernameAlreadyExist, EmailAlreadyExist, InvalidToken
-from app.auth.servises import PasswordServises, TokenServises
+from app.auth.models import User
+from app.auth.repository import UserRepository
+from app.auth.schemas import UserRegister, UserRead, ChangePasswordSchema, Token
+from app.auth.services import PasswordService, TokenService
 
 
 class AuthManager:
@@ -13,45 +14,48 @@ class AuthManager:
             session: AsyncSession,
     ):
         self.session = session
-        self.user_repository = UserRepository(session)
-        self.password_service = PasswordServises()
-        self.token_service = TokenServises()
+        self.user_repo = UserRepository(session)
+        self.password_service = PasswordService()
+        self.token_service = TokenService()
+
 
     async def login(
             self,
             username: str,
             password: str,
-
     ) -> Token:
         """
-        Метод для входа в учёт запись
+        Метод для входа в учетную запись
 
-        проверяет наличие username в БД
-        проверяет правильность пароль с БД
+        Проверяет наличие указанного юзернейма в бд
+
+        Проверяет правильность указанного пароля
 
         :param username: имя пользователя
         :param password: пароль
 
-        :return: Unauthorized: Ошибка авторизации
+        :raise Unauthorized: Ошибка авторизации
 
-        :return: JWT token
+        :return: JWT токен
         """
-        user = await self.user_repository.get_user_by_username(username)
+
+        user = await self.user_repo.get_user_by_username(username)
         if not user:
             raise InvalidUsernamePassword(
                 "Invalid username or password",
             )
+
         if not self.password_service.verify(password, user.hashed_password):
-            raise InvalidUsernamePassword(
-                "Invalid username or password",
-            )
+            raise InvalidUsernamePassword("Invalid username or password")
+
         access_token = self.token_service.encode(str(user.id))
-        refresh_token = self.token_service.encode(str(user.id), is_refresh=True)
+        refresh_token = self.token_service.encode(str(user.id), True)
 
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
         )
+
 
     async def register(
             self,
@@ -60,25 +64,28 @@ class AuthManager:
         """
         Метод для регистрации пользователя
 
-        проверят наличие username в БД
+        Проверяет наличие юзернейма в бд
 
-        проверяет наличие почты
+        Проверяет наличие почты в бд
 
         Хэширует пароль
 
-        Создаёт пользователя в БД
+        Создает пользователя в бд
 
 
-        :param request: объект модельки
-        :return: Моделька созданного пользователя
+        :param request: объект Pydantic модельки
+
+
+        :return: моделька созданного пользователя
         """
 
-        user = await self.user_repository.get_user_by_username(request.username)
+        user = await self.user_repo.get_user_by_username(request.username)
         if user:
             raise UsernameAlreadyExist(
                 "Username already exist",
             )
-        user = await self.user_repository.get_user_by_email(request.email)
+
+        user = await self.user_repo.get_user_by_email(request.email)
         if user:
             raise EmailAlreadyExist(
                 "Email already exist",
@@ -86,101 +93,106 @@ class AuthManager:
 
         hashed_password = self.password_service.hash(request.password)
 
-        user = await self.user_repository.create_user(
-            username=request.username,
-            email=request.email,
+        # user = await self.user_repo.create(
+        #     username=request.username,
+        #     email=request.email,
+        #     hashed_password=hashed_password,
+        #     fullname=request.fullname,
+        # )
+        #
+        user = await self.user_repo.create(
             hashed_password=hashed_password,
-            fullname=request.fullname,
+            **request.model_dump(
+                exclude={"password"},
+            )
         )
         await self.session.commit()
         return user
 
+
     async def get_me(
             self,
-            token: str,
+            token: str
     ) -> User:
         """
-        Метод для получения информации о пользователе
+        Метод для получения информации пользователя
 
-        Проверяем токен на валидность
+        Проверяет токен на валидность
 
-        Берём информацию по ИД из БД
+        Достает информацию по ИД из бд
 
-        :param token: JWT token
-        :return: Моделька пользователя
+        :param token: JWT токен
+        :return:  моделька токена
         """
-        payload = self.token_service.decode(token)
 
+        payload = self.token_service.decode(token)
         if payload.get("is_refresh", True):
             raise InvalidToken(
-                "Invalid token",
+                "Invalid credentials",
             )
 
         if not payload.get("sub") or not payload.get("sub").isdigit():
             raise InvalidToken(
-                "Invalid token",
+                "Invalid credentials",
             )
 
-        user = await self.user_repository.get_user_by_id(int(payload.get("sub")))
-
+        user = await self.user_repo.get_user_by_id(int(payload.get("sub")))
         if not user:
             raise InvalidToken(
-                "Invalid token",
+                "Invalid credentials"
             )
         return user
+
 
     async def change_password(
             self,
             user: User,
-            request: ChengePasswordSchemas,
-
+            request: ChangePasswordSchema
     ) -> None:
         """
-        Метод изменение пароля
+        Метод изменения пароля
 
-        Проверка наличия пользователя
+        Проверяет старый пароль пользователя
 
-        проверяет старый пароль пользователя и хэширует новый пароль
+        Хэширует новый пароль
 
-        Изменяет пароль в БД
+        Изменяет пароль в бд
 
-
-
-        :param user: Пользователь
-        :param request: Моделька
+        :param user: моделька пользователя
+        :param request: объект Pydantic модельки
         :return: ничего
         """
 
-        if self.password_service.verify(request.old_password, user.hashed_password):
-            raise InvalidUsernamePassword(
-                "Invalid username or password",
-            )
+        if not self.password_service.verify(request.old_password, user.hashed_password):
+            raise InvalidUsernamePassword("Invalid username or password")
 
-        hashed_password = self.password_service.hash(request.new_password1)
+        hashed_password = self.password_service.hash(request.new_password)
 
-        await self.user_repository.update_password(
+        await self.user_repo.update_password(
             user.id,
             hashed_password,
         )
+
         await self.session.commit()
+
 
     async def refresh_token(
             self,
-            token: str,
-
+            token: str
     ):
         """
         Метод для обновления токена
 
         Проверяет валидность токена
 
-        Создаёт новую пару токенов
+        Создает новую пару токенов
 
-        :param token: JWT token
-        :return: JWT token
+        :param token: JWT токен
+
+        :return: JWT токен
         """
-        payload = self.token_service.decode(token)
 
+        payload = self.token_service.decode(token)
         if not payload.get("is_refresh"):
             raise InvalidToken(
                 "Invalid token",
@@ -192,7 +204,7 @@ class AuthManager:
             )
 
         access_token = self.token_service.encode(payload.get("sub"))
-        refresh_token = self.token_service.encode(payload.get("sub"), is_refresh=True)
+        refresh_token = self.token_service.encode(payload.get("sub"), True)
 
         return Token(
             access_token=access_token,

@@ -1,7 +1,7 @@
-from sqlalchemy import select, insert, update, delete
+from sqlalchemy import select, Insert, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.category.models import Categories
+from app.category.models import Category
 
 
 class CategoryRepository:
@@ -11,19 +11,60 @@ class CategoryRepository:
     ):
         self.session = session
 
+
     async def create_category(
             self,
             name: str,
             description: str,
-    ) -> Categories:
-        stmt = insert(Categories).values(
+    ) -> Category:
+        """
+        Функция для создания категории
+
+        :param name: название категории
+        :param description: описание категории
+
+        :return: моделька категории
+        """
+        stmt = insert(Category).values(
             name=name,
             description=description,
-        ).returning(Categories)
+        ).returning(Category)
         result = await self.session.execute(stmt)
         await self.session.flush()
         category = result.scalars().first()
         return category
+
+
+    async def get_category_by_id(
+            self,
+            category_id: int
+    ) -> Category | None:
+        """
+        Функция для получения категории по ИД
+
+        :param category_id: ИД категории
+
+        :return: моделька категории или ничего
+        """
+        stmt = select(Category).where(Category.id == category_id)
+        result = await self.session.execute(stmt)
+        category = result.scalar_one_or_none()
+        return category
+
+
+    async def get_categories(
+            self,
+    ):
+        """
+        Функция для получения всех категорий
+
+        :return: список категории
+        """
+        stmt = select(Category)
+        result = await self.session.execute(stmt)
+        categories = result.scalars().all()
+        return categories
+
 
     async def update_category(
             self,
@@ -31,35 +72,35 @@ class CategoryRepository:
             name: str,
             description: str,
     ) -> None:
-        stmt = update(Categories).where(Categories.id == category_id).values(
+        """
+        Функция для обновления категории
+
+        :param category_id: ИД категории
+        :param name: название категории
+        :param description: описание категории
+
+        :return: ничего
+        """
+        stmt = update(Category).where(Category.id == category_id).values(
             name=name,
             description=description,
         )
-        await self.session.execute(stmt)
+        result = await self.session.execute(stmt)
         await self.session.flush()
+
 
 
     async def delete_category(
             self,
-            category_id: int,
+            category_id: int
     ) -> None:
-        stmt = delete(Categories).where(Categories.id == category_id)
-        await self.session.commit()
+        """
+        Функция для удаления категории
+
+        :param category_id: ИД категории
+
+        :return: ничего
+        """
+        stmt = delete(Category).where(Category.id == category_id)
         await self.session.execute(stmt)
-
-
-    async def get_categories(
-            self,
-    ) -> list:
-        stmt= select(Categories)
-        categories = await self.session.execute(stmt)
-        return categories.scalars().all()
-
-
-    async def get_category_by_id(
-            self,
-            category_id: int,
-    ):
-        stmt = select(Categories).where(Categories.id == category_id)
-        category = await self.session.execute(stmt)
-        return category.scalar_one_or_none()
+        await self.session.flush()
