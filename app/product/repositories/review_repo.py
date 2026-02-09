@@ -99,6 +99,8 @@ class ProductReviewRepository:
         review = result.scalar_one_or_none()
         return review
 
-
-    async def get_all(self):
-        pass
+    async def get_all(self) -> list[ProductReview]:
+        stmt = select(ProductReview)
+        result = await self.session.execute(stmt)
+        reviews = result.scalars().all()
+        return reviews
