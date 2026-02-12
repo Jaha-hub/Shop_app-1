@@ -42,7 +42,6 @@ class ProductCharacteristicsRepository:
             characteristic: ProductCharacteristics,
             name,
             value,
-            product_id,
     ) -> None:
         """
         Функция для обновления характеристики продукта
@@ -81,6 +80,7 @@ class ProductCharacteristicsRepository:
 
     async def get_by_id(
             self,
+            product_id: int,
             characteristic_id
     ) -> ProductCharacteristics:
         """
@@ -91,11 +91,16 @@ class ProductCharacteristicsRepository:
         :return: моделька характеристики
         """
 
-        stmt = select(ProductCharacteristics).where(ProductCharacteristics.id == characteristic_id)
+        stmt = select(ProductCharacteristics).where(ProductCharacteristics.id == characteristic_id, ProductCharacteristics.product_id == product_id)
         result = await self.session.execute(stmt)
         characteristics = result.scalar_one_or_none()
         return characteristics
 
 
-    async def get_all(self):
-        pass
+    async def get_all(
+            self,
+            product_id: int,
+    ):
+        stmt = select(ProductCharacteristics).where(ProductCharacteristics.product_id == product_id)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()

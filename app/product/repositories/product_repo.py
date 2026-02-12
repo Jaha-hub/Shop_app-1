@@ -1,6 +1,7 @@
 from sqlalchemy import insert, update, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.product.filters import ProductFilter
 from app.product.models import Product
 
 
@@ -109,5 +110,10 @@ class ProductRepository:
         return product
 
 
-    async def get_all(self):
-        pass
+    async def get_all(self, filters:ProductFilter) :
+        stmt = select(Product)
+        if filters:
+            stmt = filters.filter(stmt)
+            stmt = filters.sort(stmt)
+        result = await self.session.execute(stmt)
+        return result.scalars().all()

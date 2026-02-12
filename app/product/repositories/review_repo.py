@@ -1,3 +1,5 @@
+from typing import Any, Coroutine, Sequence
+
 from sqlalchemy import insert, update, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,8 +44,6 @@ class ProductReviewRepository:
     async def update(
             self,
             review: ProductReview,
-            user_id,
-            product_id,
             message,
             grade
     ) -> None:
@@ -51,16 +51,12 @@ class ProductReviewRepository:
         Функция для обновления отзыва продукта
 
         :param review: моделька отзыва
-        :param user_id: ИД пользователя
-        :param product_id: ИД продукта
         :param message: текст
         :param grade: оценка
 
         :return: ничего
         """
 
-        review.user_id = user_id
-        review.product_id = product_id
         review.message = message
         review.grade = grade
         self.session.add(review)
@@ -84,22 +80,24 @@ class ProductReviewRepository:
 
     async def get_by_id(
             self,
-            review_id
+            review_id,
+            product_id
     ) -> ProductReview:
         """
         Функция для получения продукта по ИД
 
+        :param product_id:
         :param review_id: Ид отзыва
 
         :return: моделька отзыва
         """
 
-        stmt = select(ProductReview).where(ProductReview.id == review_id)
+        stmt = select(ProductReview).where(ProductReview.id == review_id, ProductReview.product_id == product_id)
         result = await self.session.execute(stmt)
         review = result.scalar_one_or_none()
         return review
 
-    async def get_all(self) -> list[ProductReview]:
+    async def get_all(self):
         stmt = select(ProductReview)
         result = await self.session.execute(stmt)
         reviews = result.scalars().all()

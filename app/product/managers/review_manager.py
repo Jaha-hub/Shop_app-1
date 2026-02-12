@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.models import User
 from app.product.dependencies import get_review_or_404
 from app.product.exceptions import ReviewNotFound
-from app.product.models import ProductReview
+from app.product.models import ProductReview, Product
 from app.product.repositories.review_repo import ProductReviewRepository
 from app.product.schemas import ProductReviewCreate, ProductReviewUpdate
 
@@ -17,34 +18,25 @@ class ProductReviewManager:
 
     async def create_review(
             self,
-            request: ProductReviewCreate
+            request: ProductReviewCreate,
+            user: User,
+            product: Product,
     ) -> ProductReview:
-        """
-        Метод для создания продукта
-
-        :param request: запрос с данными для создания
-
-        :return: созданный продукт
-        """
-        await get_review_or_404(request.category_id, self.session)
         product = await self.review_repo.create(
-            **request.model_dump()
+            **request.model_dump(),
+            user_id=user.id,
+            product_id=product.id,
         )
         await self.session.commit()
         return product
 
     async def get_review(
             self,
+            product: Product,
             review_id: int
     ) -> ProductReview:
-        """
-        Метод для получения продукта по ИД
 
-        :param review_id: ИД продукта
-
-        :return: моделька продукт
-        """
-        product = await self.review_repo.get_by_id(review_id)
+        product = await self.review_repo.get_by_id(review_id, product.id)
         if not product:
             raise ReviewNotFound(
                 "Продукт не найден"

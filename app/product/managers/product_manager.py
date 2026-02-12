@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.category.dependencies import get_category_or_404
 from app.product.exceptions import ProductNotFound
+from app.product.filters import ProductFilter
 from app.product.models import Product
 from app.product.repositories.product_repo import ProductRepository
 from app.product.schemas import ProductCreate, ProductUpdate
@@ -15,13 +16,12 @@ class ProductManager:
         self.session = session
         self.product_repo = ProductRepository(session)
 
-
     async def create_product(
             self,
             request: ProductCreate
     ) -> Product:
         """
-        Метод для создания продукта
+        Метод создания продукта
 
         :param request: запрос с данными для создания
 
@@ -34,17 +34,16 @@ class ProductManager:
         await self.session.commit()
         return product
 
-
     async def get_product(
             self,
             product_id: int
     ) -> Product:
         """
-        Метод для получения продукта по ИД
+        получения продукта по ИД
 
         :param product_id: ИД продукта
 
-        :return: моделька продукт
+        :return: продукт
         """
         product = await self.product_repo.get_by_id(product_id)
         if not product:
@@ -53,11 +52,9 @@ class ProductManager:
             )
         return product
 
-
-    # TODO
-    async def get_all(self):
-        pass
-
+    async def get_all(self, filters: ProductFilter):
+        products = await self.product_repo.get_all(filters)
+        return products
 
     async def update_product(
             self,
@@ -65,9 +62,9 @@ class ProductManager:
             product: Product
     ) -> None:
         """
-        Метод для обновления продукта
+        обновления продукта
 
-        :param request: запрос с данными для обновления
+        :param request: запрос с данными
         :param product: моделька продукта
 
         :return: ничего
@@ -80,8 +77,6 @@ class ProductManager:
             **request.model_dump()
         )
         await self.session.commit()
-
-
 
     async def delete_product(
             self,
