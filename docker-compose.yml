@@ -1,0 +1,29 @@
+
+services:
+    # Контейнеры 
+    db:
+      image: postgres:16.11 # Образ 
+      container_name: shop_app2
+      ports: # Портов может быть несколько пишется через -
+        - "5435:5432"
+      restart: always
+      # environment:
+      env_file: .env
+      volumes:
+      - db_data:/var/lib/postgresql/data
+
+    backend:
+      build:
+        context: .
+        dockerfile: dockerfile
+      container_name: app2
+      ports:
+        - "8000:8000"
+      depends_on:
+        - db
+      env_file: .env
+    
+
+
+volumes:
+  db_data:

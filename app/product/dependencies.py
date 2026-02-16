@@ -1,11 +1,14 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.dependencies import get_current_user
+from app.auth.models import User
 from app.core.dependencies import get_db
+from app.core.exceptions import Forbidden
 from app.product.managers.characteristics_manager import ProductCharacteristicsManager
 from app.product.managers.product_manager import ProductManager
 from app.product.managers.review_manager import ProductReviewManager
-from app.product.models import  Product
+from app.product.models import Product, ProductReview
 
 
 async def get_product_manager(
@@ -44,16 +47,22 @@ async def get_review_or_404(
     manager = ProductReviewManager(session)
     return await manager.get_review(review_id)
 
+async def get_review_manager(
+    session: AsyncSession = Depends(get_db)
+):
+    return ProductReviewManager(session)
 
-# async def is_review_owner(
-#         review: ProductReview,
-#         user: User = Depends(get_current_user)
-# ) -> None:
-#     if user.id != review.user_id:
-#         raise Forbidden(
-#             "You don't have permission"
-#         )
 
+
+async def is_review_owner(
+        review: ProductReview  = Depends(get_review_or_404),
+        user: User = Depends(get_current_user)
+) -> None:
+
+    if user.id != review.user_id:
+        raise Forbidden(
+            "You don't have permission"
+        )
 
 
 
