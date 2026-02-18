@@ -1,42 +1,13 @@
 from enum import Enum
+from typing import List
 
 from pydantic import BaseModel, Field
 
-class OrderStatusEnum(Enum):
-    new = "New"
-    paid = "Paid"
-    complete = "Complete"
-    canceled = "Canceled"
-
-
-class OrderBase(BaseModel):
-    user_id: int
-    status: str = Field(max_length=20)
-    address: str = Field(max_length=512)
-    comment: str
-    phone: str = Field(max_length=20)
-
-
-class OrderCreate(OrderBase):
-    pass
-
-
-class OrderUpdate(OrderBase):
-    pass
-
-class OrderUpdateStatus(BaseModel):
-    status: str = Field(max_length=20)
-
-
-class OrderRead(BaseModel):
-    id: int
-
 
 class OrderProductBase(BaseModel):
-    order_id: int
     product_id: int
-    quantity: int
-    price: float
+    quantity: float = Field(ge=0.1)
+    price: float = Field(ge=0)
 
 
 class OrderProductCreate(OrderProductBase):
@@ -49,3 +20,36 @@ class OrderProductUpdate(OrderProductBase):
 
 class OrderProductRead(OrderProductBase):
     id: int
+
+
+class OrderStatusEnum(Enum):
+    new = "New"
+    paid = "Paid"
+    complete = "Complete"
+    canceled = "Canceled"
+
+
+class OrderBase(BaseModel):
+    status: OrderStatusEnum = OrderStatusEnum.new
+    address: str = Field(max_length=512)
+    comment: str
+    phone: str = Field(max_length=20)
+
+
+class OrderCreate(OrderBase):
+    products: List[OrderProductCreate]
+
+
+class OrderUpdate(OrderBase):
+    products: List[OrderProductUpdate]
+
+
+class OrderUpdateStatus(BaseModel):
+    status: OrderStatusEnum = OrderStatusEnum.new
+
+
+class OrderRead(OrderBase):
+    id: int
+    user_id: int
+    products: List[OrderProductRead]
+    total_sum: float = Field(ge=0)

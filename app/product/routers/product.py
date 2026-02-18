@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, FastAPI
+from fastapi import APIRouter, Depends
 from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
-from sqlalchemy.util import await_only
 
 from app.product.dependencies import get_product_manager
 from app.product.filters import ProductFilter
@@ -15,7 +14,7 @@ router = APIRouter(
 )
 
 
-@cbv
+@cbv(router)
 class ProductRouter:
     manager: ProductManager = Depends(get_product_manager)
 

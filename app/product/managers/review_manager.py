@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-from app.product.dependencies import get_review_or_404
+
 from app.product.exceptions import ReviewNotFound
 from app.product.models import ProductReview, Product
 from app.product.repositories.review_repo import ProductReviewRepository
@@ -61,7 +61,6 @@ class ProductReviewManager:
         :return: ничего
         """
 
-        await get_review_or_404(request.id, self.session)
 
         await self.review_repo.update(
             product,

@@ -9,8 +9,15 @@ class Settings(BaseSettings):
 
     ASYNC_DATABASE_URL: str
 
+    DATABASE_URL: str
+
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+
     model_config = SettingsConfigDict(
         env_file=".env"
     )
+
 
 settings = Settings()

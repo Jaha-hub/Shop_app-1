@@ -42,10 +42,11 @@ async def get_characteristics_or_404(
 
 async def get_review_or_404(
         review_id: int,
+        product: Product = Depends(get_product_or_404),
         session: AsyncSession = Depends(get_db)
 ):
     manager = ProductReviewManager(session)
-    return await manager.get_review(review_id)
+    return await manager.get_review(review_id= review_id,product=product)
 
 async def get_review_manager(
     session: AsyncSession = Depends(get_db)

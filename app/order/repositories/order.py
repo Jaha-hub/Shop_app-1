@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.order.models import Order
 
 
-class ProductRepository:
+class OrderRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
@@ -32,13 +32,11 @@ class ProductRepository:
     async def update(
             self,
             order: Order,
-            user_id,
             address,
             comment,
             status,
             phone,
     ) -> None:
-        order.user_id = user_id
         order.address = address
         order.comment = comment
         order.status = status
@@ -59,11 +57,17 @@ class ProductRepository:
     ) -> Order:
         stmt = select(Order).where(Order.id == order_id)
         result = await self.session.execute(stmt)
-        product = result.scalar_one_or_none()
-        return product
+        order = result.scalar_one_or_none()
+        return order
 
-    async def get_all(self):
+    async def get_all(
+            self,
+            filters
+    ):
         stmt = select(Order)
+        if filters:
+            stmt = filters.filter(stmt)
+            stmt = filters.sort(stmt)
         result = await self.session.execute(stmt)
         order = result.scalars().all()
         return order
