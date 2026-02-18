@@ -10,13 +10,11 @@ class ProductRepository:
 
     async def create(
             self,
-            order_id,
             product_id,
             quantity,
             price,
     ) -> OrderProducts:
         stmt = insert(OrderProducts).values(
-            order_id=order_id,
             product_id=product_id,
             quantity=quantity,
             price=price,
@@ -29,25 +27,22 @@ class ProductRepository:
 
     async def update(
             self,
-
-            order_id,
+            order_product: OrderProducts,
             product_id,
             quantity,
             price,
             
 
     ) -> None:
-        order.user_id = user_id
-        order.address = address
-        order.comment = comment
-        order.status = status
-        order.phone = phone
-        self.session.add(order)
+        order_product.product_id = product_id
+        order_product.quantity = quantity
+        order_product.price = price
+        self.session.add(order_product)
         await self.session.flush()
 
     async def delete(
             self,
-            order: Order,
+            order: OrderProducts,
     ) -> None:
         await self.session.delete(order)
         await self.session.flush()
@@ -55,14 +50,14 @@ class ProductRepository:
     async def get_by_id(
             self,
             order_id: int
-    ) -> Order:
-        stmt = select(Order).where(Order.id == order_id)
+    ) -> OrderProducts:
+        stmt = select(OrderProducts).where(OrderProducts.id == order_id)
         result = await self.session.execute(stmt)
         product = result.scalar_one_or_none()
         return product
 
     async def get_all(self):
-        stmt = select(Order)
+        stmt = select(OrderProducts)
         result = await self.session.execute(stmt)
         order = result.scalars().all()
         return order
