@@ -22,11 +22,12 @@ class OrderProductRead(OrderProductBase):
     id: int
 
 
-class OrderStatusEnum(Enum):
+class OrderStatusEnum(str, Enum):
     new = "New"
     paid = "Paid"
     complete = "Complete"
     canceled = "Canceled"
+
 
 
 class OrderBase(BaseModel):

@@ -1,3 +1,4 @@
+from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -44,7 +45,7 @@ class ProductReviewRead(ProductReviewBase, TimeActionSchema):
 class ProductBase(BaseModel):
     name: str = Field(max_length=512)
     short_description: str = Field(max_length=512)
-    price: float = Field(max_digits=20, decimal_places=2)
+    price: Decimal  = Field(max_digits=20, decimal_places=2)
 
 class ProductCreate(ProductBase):
     category_id: int = Field(ge=1)

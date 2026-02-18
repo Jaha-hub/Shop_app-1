@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi_filter import FilterDepends
 from fastapi_utils.cbv import cbv
 
 from app.auth.dependencies import get_current_user
@@ -22,10 +23,9 @@ class OrderRouter:
     @router.get("/")
     async def list(
             self,
-            filters: OrderFilter = Depends(OrderFilter),
+            filters: OrderFilter = FilterDepends(OrderFilter),
     ):
-        orders = await self.manager.list(filters)
-        return orders
+        return await self.manager.list(filters)
 
     @router.get("/{order_id}")
     async def get_by_id(

@@ -15,7 +15,12 @@ class Order(Base, IntIdMixin, TimeActionMixin):
     status = Column(String(20), nullable=False)
     phone = Column(String(20), nullable=False)
 
-    products = relationship('OrderProducts', backref='order', lazy='selectin')
+    products = relationship(
+        "OrderProducts",
+        backref="order",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
 
     @hybrid_property
     def total_sum(self):
@@ -34,7 +39,7 @@ class Order(Base, IntIdMixin, TimeActionMixin):
 class OrderProducts(Base, IntIdMixin, TimeActionMixin):
     __tablename__ = "orderproducts"
 
-    order_id = Column(BigInteger,ForeignKey("orders.id"), nullable=False)
+    order_id = Column(BigInteger,ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(BigInteger,ForeignKey("products.id"), nullable=False)
     quantity = Column(Integer, nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
