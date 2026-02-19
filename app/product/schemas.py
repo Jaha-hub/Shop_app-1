@@ -4,6 +4,10 @@ from pydantic import BaseModel, Field
 
 from app.core.schemas import TimeActionSchema
 
+class ProductImageRead(BaseModel):
+    id: int
+    filename: str
+    url: str
 
 class ProductCharacteristicsBase(BaseModel):
     name: str = Field(max_length=512)
@@ -60,6 +64,7 @@ class ProductMinRead(ProductBase):
     id: int
     rating: float = 0
     review_count: int = 0
+    images: list[ProductImageRead] = []
 
 
 class ProductRead(ProductMinRead, TimeActionSchema):

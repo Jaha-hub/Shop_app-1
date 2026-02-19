@@ -24,6 +24,7 @@ from app.category.models import Category
 from app.product.models import Product, ProductReview, ProductCharacteristics
 from app.order.models import Order, OrderProducts
 from app.product.models import Product, ProductCharacteristics, ProductReview
+from app.product.models import ProductImages
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

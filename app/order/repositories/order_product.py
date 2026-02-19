@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.order.models import OrderProducts, Order
-from app.order.schemas import OrderProductCreate
+from app.order.schemas import OrderProductCreate, OrderProductUpdate
 
 
 class OrderProductRepository:
@@ -11,7 +11,7 @@ class OrderProductRepository:
 
     async def create(
             self,
-            products: list[OrderProductCreate],
+            products: list[OrderProductCreate | OrderProductUpdate],
             order: Order
     ):
         order_products = [
@@ -50,3 +50,11 @@ class OrderProductRepository:
             order_product: OrderProducts
     ):
         await self.session.delete(order_product)
+
+    async def clear(
+            self,
+            order_id: int
+    ):
+        stmt = delete(OrderProducts).where(OrderProducts.order_id == order_id)
+        await self.session.execute(stmt)
+        await self.session.flush()
