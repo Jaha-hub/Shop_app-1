@@ -30,7 +30,7 @@ class ProductImageManager:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        await self.repo.create(product.id, filename, file_path)
+        await self.repo.create(product.id, filename, str(file_path))
         await self.session.commit()
 
     async def delete(
