@@ -38,7 +38,7 @@ class Order(Base, IntIdMixin, TimeActionMixin):
 
 
 class OrderProducts(Base, IntIdMixin, TimeActionMixin):
-    __tablename__ = "orderproducts"
+    __tablename__ = "order_products"
 
     order_id = Column(BigInteger,ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(BigInteger,ForeignKey("products.id"), nullable=False)
