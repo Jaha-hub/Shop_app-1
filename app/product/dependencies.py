@@ -15,7 +15,7 @@ from app.product.models import Product, ProductReview
 async def get_product_manager(
         session: AsyncSession = Depends(get_db)
 ):
-    return ProductManager(session)
+    return ProductManager(session)  
 
 
 async def get_product_or_404(

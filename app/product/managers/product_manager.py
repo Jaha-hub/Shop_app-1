@@ -27,7 +27,7 @@ class ProductManager:
 
         :return: созданный продукт
         """
-        await get_category_or_404(request.category_id, self.session)
+        await get_category_or_404(request.category_id, self.session)    
         product = await self.product_repo.create(
             **request.model_dump()
         )
