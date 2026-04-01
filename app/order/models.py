@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, Text, Numeric, BigInteger, ForeignKey, Integer, UniqueConstraint, select, func
+from sqlalchemy import Column, String, Text, Numeric, BigInteger, ForeignKey, Integer, UniqueConstraint, select, func, \
+    Float
 from sqlalchemy.orm import relationship
 
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -37,11 +38,11 @@ class Order(Base, IntIdMixin, TimeActionMixin):
 
 
 class OrderProducts(Base, IntIdMixin, TimeActionMixin):
-    __tablename__ = "orderproducts"
+    __tablename__ = "order_products"
 
     order_id = Column(BigInteger,ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(BigInteger,ForeignKey("products.id"), nullable=False)
-    quantity = Column(Integer, nullable=False)
+    quantity = Column(Float, nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
 
     __table_args__ = (

@@ -8,7 +8,7 @@ from app.order.dependencies import get_order_manager, get_order_or_404
 from app.order.filters import OrderFilter
 from app.order.managers.order import OrderManager
 from app.order.models import Order
-from app.order.schemas import OrderCreate
+from app.order.schemas import OrderCreate, OrderUpdate
 
 router = APIRouter(
     prefix="/order",
@@ -57,5 +57,9 @@ class OrderRouter:
         await self.manager.delete(order)
 
     @router.put("/{order_id}")
-    async def update(self):
-        pass
+    async def update(
+            self,
+            request: OrderUpdate,
+            order: Order = Depends(get_order_or_404),
+    ):
+        await self.manager.update(request,order)

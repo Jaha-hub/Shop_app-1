@@ -4,7 +4,7 @@ from app.order.filters import OrderFilter
 from app.order.models import Order
 from app.order.repositories.order import OrderRepository
 from app.order.repositories.order_product import OrderProductRepository
-from app.order.schemas import OrderCreate
+from app.order.schemas import OrderCreate, OrderUpdate
 
 
 class OrderManager:
@@ -53,4 +53,15 @@ class OrderManager:
         orders = await self.repo.get_all(filters=filters)
         return orders
 
-
+    async def update(
+            self,
+            request: OrderUpdate,
+            order: Order,
+    ):
+        await self.repo.update(order, **request.model_dump(exclude={"products"}))
+        await self.order_product_repo.clear(order.id)
+        await self.order_product_repo.create(
+            request.products,
+            order=order
+        )
+        await self.session.commit()

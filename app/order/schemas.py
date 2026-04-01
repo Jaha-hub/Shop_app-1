@@ -42,7 +42,7 @@ class OrderCreate(OrderBase):
 
 
 class OrderUpdate(OrderBase):
-    products: List[OrderProductUpdate]
+    products: List[OrderProductUpdate | OrderProductUpdate]
 
 
 class OrderUpdateStatus(BaseModel):

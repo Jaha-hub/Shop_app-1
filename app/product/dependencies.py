@@ -4,8 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.core.dependencies import get_db
-from app.core.exceptions import Forbidden
+from app.core.exceptions import Forbidden, NotFound
 from app.product.managers.characteristics_manager import ProductCharacteristicsManager
+from app.product.managers.image_manager import ProductImageManager
 from app.product.managers.product_manager import ProductManager
 from app.product.managers.review_manager import ProductReviewManager
 from app.product.models import Product, ProductReview
@@ -14,7 +15,7 @@ from app.product.models import Product, ProductReview
 async def get_product_manager(
         session: AsyncSession = Depends(get_db)
 ):
-    return ProductManager(session)
+    return ProductManager(session)  
 
 
 async def get_product_or_404(
@@ -68,3 +69,19 @@ async def is_review_owner(
 
 
 
+async def get_product_image_manager(
+        session: AsyncSession = Depends(get_db)
+):
+    return ProductImageManager(session)
+
+async def get_product_image_or_404(
+        file_name: str,
+        product: Product = Depends(get_product_or_404),
+        manager: ProductImageManager = Depends(get_product_image_manager),
+):
+    image = await manager.get(file_name)
+    if not image.product_id != product.id:
+        raise NotFound(
+            f"Product {product.id} doesn't exist"
+        )
+    return image
